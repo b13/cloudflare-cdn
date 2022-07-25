@@ -1,0 +1,24 @@
+{
+    "name": "b13/cloudflare-cdn",
+    "type": "typo3-cms-extension",
+    "description": "Cloudflare CDN Adapter for purging TYPO3 caches",
+    "keywords": ["typo3", "cdn", "cloudflare", "cache", "purge"],
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "typo3/cms-core": "^10.4 || ^11.0",
+        "php": "^7.4 || 8.0"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "cloudflare_cdn"
+        }
+    },
+    "suggest": {
+        "b13/proxycachemanager": "Proxy Cache Manager Extension to provide integration into TYPO3s Backend Cache Flush methods"
+    },
+    "autoload": {
+        "psr-4": {
+            "B13\\CloudflareCDN\\": "Classes/"
+        }
+    }
+}
