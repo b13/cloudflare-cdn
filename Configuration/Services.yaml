@@ -1,0 +1,10 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  B13\CloudflareCDN\Command\PurgeCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cdn:purge'
