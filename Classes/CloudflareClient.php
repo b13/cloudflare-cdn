@@ -57,20 +57,13 @@ class CloudflareClient implements LoggerAwareInterface
         }
     }
 
-    public function purgeEverything(array $urls = []): void
+    public function purgeEverything(): void
     {
         if (!$this->isActive()) {
             return;
         }
-        if (empty($urls)) {
-            foreach ($this->getZones() as $zoneId) {
-                $this->purgeZone($zoneId);
-            }
-        } else {
-            $groupedUrls = $this->groupUrlsByAllowedZones($urls);
-            foreach ($groupedUrls as $zoneId => $urls) {
-                $this->purgeInChunks($zoneId, $urls);
-            }
+        foreach ($this->getZones() as $zoneId) {
+            $this->purgeZone($zoneId);
         }
     }
 
@@ -79,7 +72,6 @@ class CloudflareClient implements LoggerAwareInterface
         if (!$this->isActive()) {
             return;
         }
-
         $groupedUrls = $this->groupUrlsByAllowedZones($urls);
         foreach ($groupedUrls as $zoneId => $urls) {
             $this->purgeInChunks($zoneId, $urls);

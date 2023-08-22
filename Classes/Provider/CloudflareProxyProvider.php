@@ -21,32 +21,25 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudflareProxyProvider implements ProxyProviderInterface
 {
-    /**
-     * @var CloudflareClient
-     */
-    protected $client;
+
+    protected CloudflareClient $client;
 
     public function __construct()
     {
         $this->client = GeneralUtility::makeInstance(CloudflareClient::class);
     }
 
-    public function setProxyEndpoints($endpoints)
-    {
-        // not necessary
-    }
-
-    public function flushCacheForUrl($url)
+    public function flushCacheForUrl(string $url): void
     {
         $this->client->purgeUrl($url);
     }
 
-    public function flushAllUrls($urls = [])
+    public function flushAllUrls(array $urls = []): void
     {
-        $this->client->purgeEverything($urls);
+        $this->client->purgeEverything();
     }
 
-    public function flushCacheForUrls(array $urls)
+    public function flushCacheForUrls(array $urls): void
     {
         $this->client->purgeUrls($urls);
     }
