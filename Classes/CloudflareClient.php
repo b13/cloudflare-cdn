@@ -46,6 +46,7 @@ class CloudflareClient implements LoggerAwareInterface
             }
             $data = ['json' => ['files' => array_values($urls)]];
             try {
+                $this->logger->debug('purgeUrl: purge_cache', $data);
                 $this->getClient($zoneId)->post('purge_cache', $data);
             } catch (TransferException $e) {
                 $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
@@ -95,7 +96,9 @@ class CloudflareClient implements LoggerAwareInterface
         foreach ($urlGroups as $urlGroup) {
             if (!empty($urlGroup)) {
                 try {
-                    $client->post('purge_cache', ['json' => ['files' => array_values($urlGroup)]]);
+                    $data = ['json' => ['files' => array_values($urlGroup)]];
+                    $this->logger->debug('purgeInChunks: purge_cache', $data);
+                    $client->post('purge_cache', $data);
                 } catch (TransferException $e) {
                     $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
                         'urls' => $urls,
@@ -156,7 +159,9 @@ class CloudflareClient implements LoggerAwareInterface
     public function purgeZone(string $zoneId): void
     {
         try {
-            $this->getClient($zoneId)->post('purge_cache', ['json' => ['purge_everything' => true]]);
+            $data = ['json' => ['purge_everything' => true]];
+            $this->logger->debug('purgeZone: purge_cache', $data);
+            $this->getClient($zoneId)->post('purge_cache', $data);
         } catch (TransferException $e) {
             $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
                 'zone' => $zoneId,
