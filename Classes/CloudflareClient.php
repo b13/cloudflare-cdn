@@ -170,7 +170,7 @@ class CloudflareClient implements LoggerAwareInterface
         }
     }
 
-    protected function getZones(): array
+    public function getZones(): array
     {
         return $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['cloudflare']['zones'] ?? [];
     }
