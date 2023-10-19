@@ -29,11 +29,6 @@ class CloudflareProxyProvider implements ProxyProviderInterface
         $this->client = GeneralUtility::makeInstance(CloudflareClient::class);
     }
 
-    public function flushCacheForUrl(string $url): void
-    {
-        $this->client->purgeUrl($url);
-    }
-
     public function flushAllUrls(array $urls = []): void
     {
         $this->client->purgeEverything();
