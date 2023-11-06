@@ -14,6 +14,7 @@ namespace B13\CloudflareCDN\Provider;
 
 use B13\CloudflareCDN\CloudflareClient;
 use B13\Proxycachemanager\Provider\ProxyProviderInterface;
+use Psr\Http\Message\RequestInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -21,32 +22,20 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudflareProxyProvider implements ProxyProviderInterface
 {
-    /**
-     * @var CloudflareClient
-     */
-    protected $client;
+
+    protected CloudflareClient $client;
 
     public function __construct()
     {
         $this->client = GeneralUtility::makeInstance(CloudflareClient::class);
     }
 
-    public function setProxyEndpoints($endpoints)
+    public function flushAllUrls(array $urls = []): void
     {
-        // not necessary
+        $this->client->purgeEverything();
     }
 
-    public function flushCacheForUrl($url)
-    {
-        $this->client->purgeUrl($url);
-    }
-
-    public function flushAllUrls($urls = [])
-    {
-        $this->client->purgeEverything($urls);
-    }
-
-    public function flushCacheForUrls(array $urls)
+    public function flushCacheForUrls(array $urls): void
     {
         $this->client->purgeUrls($urls);
     }
@@ -54,5 +43,10 @@ class CloudflareProxyProvider implements ProxyProviderInterface
     public function isActive(): bool
     {
         return $this->client->isActive();
+    }
+
+    public function shouldRequestBeMarkedAsCached(RequestInterface $request): bool
+    {
+        return isset($this->client->getZones()[$request->getUri()->getHost()]);
     }
 }

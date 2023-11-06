@@ -5,8 +5,8 @@
     "keywords": ["typo3", "cdn", "cloudflare", "cache", "purge"],
     "license": "GPL-2.0-or-later",
     "require": {
-        "typo3/cms-core": "^10.4 || ^11.0",
-        "php": "^7.4 || ^8.0"
+        "typo3/cms-core": "^11.5 || ^12.4",
+        "php": "^8.0"
     },
     "extra": {
         "typo3/cms": {
