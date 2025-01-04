@@ -44,7 +44,6 @@ class PurgeCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'A list of absolute URLs to purge.',
-                []
             )->addOption(
                 'zone',
                 null,
@@ -53,7 +52,7 @@ class PurgeCommand extends Command
             );
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
@@ -64,7 +63,7 @@ class PurgeCommand extends Command
 
         if (!$api->isActive()) {
             $io->error('CDN is not configured properly');
-            return 1;
+            return Command::FAILURE;
         }
 
         if (!$io->isQuiet()) {
@@ -80,10 +79,10 @@ class PurgeCommand extends Command
                         (string)$e->getResponse()->getBody()->getContents(),
                     ]
                 );
-                return 1;
+                return Command::FAILURE;
             }
             $io->success('Purged CDN caches for URLs successfully');
-            return 0;
+            return Command::SUCCESS;
         }
         if (!empty($zone)) {
             try {
@@ -100,10 +99,10 @@ class PurgeCommand extends Command
             if (!$io->isQuiet()) {
                 $io->success('Purged CDN caches for zone "' . $zone . '" successfully');
             }
-            return 0;
+            return Command::SUCCESS;
         }
 
         $io->error('Nothing done');
-        return 1;
+        return Command::INVALID;
     }
 }
