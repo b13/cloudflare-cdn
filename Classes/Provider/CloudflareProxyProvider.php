@@ -14,7 +14,7 @@ namespace B13\CloudflareCDN\Provider;
 
 use B13\CloudflareCDN\CloudflareClient;
 use B13\Proxycachemanager\Provider\ProxyProviderInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -45,7 +45,7 @@ class CloudflareProxyProvider implements ProxyProviderInterface
         return $this->client->isActive();
     }
 
-    public function shouldRequestBeMarkedAsCached(RequestInterface $request): bool
+    public function shouldRequestBeMarkedAsCached(ServerRequestInterface $request): bool
     {
         return isset($this->client->getZones()[$request->getUri()->getHost()]);
     }
