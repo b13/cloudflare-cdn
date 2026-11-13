@@ -14,6 +14,7 @@ namespace B13\CloudflareCDN;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\HandlerStack;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -126,9 +127,14 @@ class CloudflareClient implements LoggerAwareInterface
     protected function initializeClient(string $zoneId, string $apiToken): Client
     {
         $httpOptions = $GLOBALS['TYPO3_CONF_VARS']['HTTP'];
-        if (isset($httpOptions['handler']) && empty($httpOptions['handler'])) {
-            // let guzzle choose handler
-            unset($httpOptions['handler']);
+        // TYPO3 configures HTTP.handler as a list of middlewares, while Guzzle expects a single callable,
+        // so build the stack the same way TYPO3's GuzzleClientFactory does.
+        if (is_array($httpOptions['handler'] ?? null)) {
+            $stack = HandlerStack::create();
+            foreach ($httpOptions['handler'] as $name => $handler) {
+                $stack->push($handler, (string)$name);
+            }
+            $httpOptions['handler'] = $stack;
         }
         $httpOptions['base_uri'] = str_replace('{zoneId}', $zoneId, $this->baseUrl);
         $httpOptions['headers']['Content-Type'] = 'application/json';
