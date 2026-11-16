@@ -12,27 +12,29 @@ declare(strict_types=1);
 
 namespace B13\CloudflareCDN;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\TransferException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use TYPO3\CMS\Core\Http\RequestFactory;
 
 /**
- * This class encapsulates some Cloudflare-specific functionality with Guzzle clients
- * and some TYPO3-specific implementation for Guzzle and configuration.
+ * This class encapsulates some Cloudflare-specific functionality on top of TYPO3's RequestFactory.
  * @todo: Ideally, this client would actually throw custom exceptions so we could show proper error messages
  * (or catch them silently in the ProxyProvider interface).
+ *
+ * Public, because it is created via GeneralUtility::makeInstance(), which only injects
+ * constructor arguments into public services.
  */
+#[Autoconfigure(public: true)]
 class CloudflareClient implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     protected string $baseUrl = 'https://api.cloudflare.com/client/v4/zones/{zoneId}/';
 
-    /**
-     * Array of Guzzle clients per Zone ID
-     * @var Client[]
-     */
-    protected $clients = [];
+    public function __construct(protected readonly RequestFactory $requestFactory)
+    {
+    }
 
     public function purgeUrl(string $url): void
     {
@@ -47,7 +49,7 @@ class CloudflareClient implements LoggerAwareInterface
             $data = ['json' => ['files' => array_values($urls)]];
             try {
                 $this->logger->debug('purgeUrl: purge_cache', $data);
-                $this->getClient($zoneId)->post('purge_cache', $data);
+                $this->post($zoneId, 'purge_cache', $data);
             } catch (TransferException $e) {
                 $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
                     'urls' => $urls,
@@ -91,14 +93,13 @@ class CloudflareClient implements LoggerAwareInterface
         if (empty($urls)) {
             return;
         }
-        $client = $this->getClient($zoneId);
         $urlGroups = array_chunk($urls, $chunkSize);
         foreach ($urlGroups as $urlGroup) {
             if (!empty($urlGroup)) {
                 try {
                     $data = ['json' => ['files' => array_values($urlGroup)]];
                     $this->logger->debug('purgeInChunks: purge_cache', $data);
-                    $client->post('purge_cache', $data);
+                    $this->post($zoneId, 'purge_cache', $data);
                 } catch (TransferException $e) {
                     $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
                         'urls' => $urls,
@@ -115,25 +116,10 @@ class CloudflareClient implements LoggerAwareInterface
         return !empty(getenv('CLOUDFLARE_API_TOKEN'));
     }
 
-    protected function getClient(string $zoneId): Client
+    protected function post(string $zoneId, string $endpoint, array $options): void
     {
-        if (!isset($this->clients[$zoneId])) {
-            $this->clients[$zoneId] = $this->initializeClient($zoneId, getenv('CLOUDFLARE_API_TOKEN'));
-        }
-        return $this->clients[$zoneId];
-    }
-
-    protected function initializeClient(string $zoneId, string $apiToken): Client
-    {
-        $httpOptions = $GLOBALS['TYPO3_CONF_VARS']['HTTP'];
-        if (isset($httpOptions['handler']) && empty($httpOptions['handler'])) {
-            // let guzzle choose handler
-            unset($httpOptions['handler']);
-        }
-        $httpOptions['base_uri'] = str_replace('{zoneId}', $zoneId, $this->baseUrl);
-        $httpOptions['headers']['Content-Type'] = 'application/json';
-        $httpOptions['headers']['Authorization'] = 'Bearer ' . $apiToken;
-        return new Client($httpOptions);
+        $options['headers']['Authorization'] = 'Bearer ' . getenv('CLOUDFLARE_API_TOKEN');
+        $this->requestFactory->request(str_replace('{zoneId}', $zoneId, $this->baseUrl) . $endpoint, 'POST', $options);
     }
 
     /**
@@ -161,7 +147,7 @@ class CloudflareClient implements LoggerAwareInterface
         try {
             $data = ['json' => ['purge_everything' => true]];
             $this->logger->debug('purgeZone: purge_cache', $data);
-            $this->getClient($zoneId)->post('purge_cache', $data);
+            $this->post($zoneId, 'purge_cache', $data);
         } catch (TransferException $e) {
             $this->logger->error('Could not flush URLs for {zone} via POST "purge_cache"', [
                 'zone' => $zoneId,
